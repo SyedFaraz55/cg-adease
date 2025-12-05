@@ -30,9 +30,10 @@ export default function Dashboard() {
         .from('adease_screens')
         .select('*')
         .order('created_at', { ascending: false })
-      if (!error && data) {
+      if (error) {
+        console.error("Failed to fetch screens:", error.message)
+      } else if (data) {
         setScreens(data)
-        console.log(data)
       }
       setLoading(false)
     }
@@ -54,7 +55,7 @@ export default function Dashboard() {
           <CardContent>
             <div className="text-2xl font-bold">{screens.length}</div>
             <p className="text-xs text-muted-foreground">
-              {screens.filter((s) => s.isActive).length} active, {screens.filter((s) => !s.isActive).length} inactive
+              {screens.filter((s) => s.is_active).length} active, {screens.filter((s) => !s.is_active).length} inactive
             </p>
           </CardContent>
         </Card>
@@ -109,7 +110,7 @@ export default function Dashboard() {
                     )}
                     <div>
                       <p className="font-medium">{screen.title}</p>
-                      <p className="text-sm text-gray-500">{screen.macAddress}</p>
+                      <p className="text-sm text-gray-500">{screen.location}</p>
                     </div>
                   </div>
                   <div className="text-sm text-gray-500">{new Date(screen.created_at).toLocaleDateString()}</div>

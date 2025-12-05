@@ -31,7 +31,12 @@ export default function ScreensPage() {
         .from('adease_screens')
         .select('*')
         .order('created_at', { ascending: false })
-      if (!error && data) setScreens(data as Screen[])
+      if (error) {
+        console.error("Failed to fetch screens:", error.message)
+        alert("Failed to load screens. Please refresh the page.")
+      } else if (data) {
+        setScreens(data as Screen[])
+      }
       setLoading(false)
     }
     fetchScreens()
@@ -40,16 +45,19 @@ export default function ScreensPage() {
   // Add screen handler
   const handleAddScreen = async (screen: Omit<Screen, 'id' | 'created_at'>) => {
     setLoading(true)
-
-
     const { error } = await supabase.from('adease_screens').insert([screen])
-    console.log(error)
-    if (!error) {
-      // Refresh list
-      const { data } = await supabase
-        .from('adease_screens')
-        .select('*')
-        .order('created_at', { ascending: false })
+    if (error) {
+      console.error("Failed to add screen:", error.message)
+      alert("Failed to add screen. Please try again.")
+      setLoading(false)
+      return
+    }
+    // Refresh list
+    const { data } = await supabase
+      .from('adease_screens')
+      .select('*')
+      .order('created_at', { ascending: false })
+    if (data) {
       setScreens(data as Screen[])
       setIsModalOpen(false)
     }
@@ -61,24 +69,43 @@ export default function ScreensPage() {
     const screen = screens.find(s => s.id === screenId)
     if (!screen) return
     setLoading(true)
-    await supabase.from('adease_screens').update({ is_active: !screen.is_active }).eq('id', screenId)
+    const { error } = await supabase.from('adease_screens').update({ is_active: !screen.is_active }).eq('id', screenId)
+    if (error) {
+      console.error("Failed to update screen status:", error.message)
+      alert("Failed to update screen status. Please try again.")
+      setLoading(false)
+      return
+    }
     const { data } = await supabase
       .from('adease_screens')
       .select('*')
       .order('created_at', { ascending: false })
-    setScreens(data as Screen[])
+    if (data) {
+      setScreens(data as Screen[])
+    }
     setLoading(false)
   }
 
   // Delete handler
   const deleteScreen = async (screenId: string) => {
+    if (!confirm("Are you sure you want to delete this screen?")) {
+      return
+    }
     setLoading(true)
-    await supabase.from('adease_screens').delete().eq('id', screenId)
+    const { error } = await supabase.from('adease_screens').delete().eq('id', screenId)
+    if (error) {
+      console.error("Failed to delete screen:", error.message)
+      alert("Failed to delete screen. Please try again.")
+      setLoading(false)
+      return
+    }
     const { data } = await supabase
       .from('adease_screens')
       .select('*')
       .order('created_at', { ascending: false })
-    setScreens(data as Screen[])
+    if (data) {
+      setScreens(data as Screen[])
+    }
     setLoading(false)
   }
 

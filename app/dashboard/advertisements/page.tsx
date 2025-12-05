@@ -46,7 +46,11 @@ export default function AdvertisementsPage() {
         .from('adease_screens')
         .select('*')
         .order('created_at', { ascending: false })
-      if (!error && data) setScreens(data as Screen[])
+      if (error) {
+        console.error("Failed to fetch screens:", error.message)
+      } else if (data) {
+        setScreens(data as Screen[])
+      }
       setLoadingScreens(false)
     }
     fetchScreens()
@@ -58,7 +62,9 @@ export default function AdvertisementsPage() {
       .from('adease_ads')
       .select('*')
       .order('created_at', { ascending: false })
-    if (!error && data) {
+    if (error) {
+      console.error("Failed to fetch advertisements:", error.message)
+    } else if (data) {
       // Join with screens for display
       const adsWithScreen = data.map((ad: Advertisement) => {
         const screen = screens.find((s) => s.id === ad.screen_id)
@@ -82,6 +88,10 @@ export default function AdvertisementsPage() {
   }
 
 const deleteAdvertisement = async (adId: string) => {
+  if (!confirm("Are you sure you want to delete this advertisement?")) {
+    return
+  }
+  
   // Delete from Supabase
   const { error } = await supabase
     .from("adease_ads")
@@ -90,17 +100,13 @@ const deleteAdvertisement = async (adId: string) => {
 
   if (error) {
     console.error("Failed to delete ad:", error.message)
+    alert("Failed to delete advertisement. Please try again.")
     return
   }
 
   // Update React state
   const updatedAds = advertisements.filter((ad) => ad.id !== adId)
   setAdvertisements(updatedAds)
-
-  // Optional: Update localStorage if still using it
-  const savedAds = JSON.parse(localStorage.getItem("advertisements") || "[]")
-  const filteredAds = savedAds.filter((ad: Advertisement) => ad.id !== adId)
-  localStorage.setItem("advertisements", JSON.stringify(filteredAds))
 }
  
 
@@ -119,19 +125,19 @@ const deleteAdvertisement = async (adId: string) => {
   }
 
   const handlePreview = (ad:any) => {
-
-
-    const [screen] = screens.filter(screen => screen.title == ad.screen_id)
+    const screen = screens.find(screen => screen.id === ad.screen_id)
+    if (!screen) {
+      alert('Screen not found for this advertisement')
+      return
+    }
     if(!screen.is_active) {
       alert('Screen is not Active')
       return
     }
-    // window.open(`/ad/${ad.id}, '_blank`) 
     window.open(`/ad/${ad.id}`, "_blank")
-
   }
   const handleCopy = (adId: string) => {
-    const url = `http://localhost:3000/ad/${adId}`
+    const url = `${window.location.origin}/ad/${adId}`
     navigator.clipboard.writeText(url)
     alert("Ad link copied to clipboard!")
   }

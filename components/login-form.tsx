@@ -27,10 +27,13 @@ export default function LoginForm() {
     })
     
     setIsLoading(false)
-    localStorage.setItem("@session_id", JSON.stringify(data.session));
     if (error) {
       setError(error.message)
       return
+    }
+    
+    if (data.session) {
+      localStorage.setItem("@session_id", JSON.stringify(data.session));
     }
     router.push("/dashboard")
   }

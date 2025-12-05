@@ -56,15 +56,22 @@ export default function AddAdvertisementModal({ isOpen, onClose, onSubmit, scree
     // Upload to Supabase
     const filePath = `ads/${Date.now()}_${file.name}`
     const { error } = await supabase.storage.from('adease').upload(filePath, file)
-    console.log(error)
-    if (!error) {
-      const { data } = supabase.storage.from('adease').getPublicUrl(filePath)
-      setImageUrl(data.publicUrl)
+    if (error) {
+      console.error("Failed to upload image:", error.message)
+      alert("Failed to upload image. Please try again.")
+      setImageFile(null)
+      return
     }
+    const { data } = supabase.storage.from('adease').getPublicUrl(filePath)
+    setImageUrl(data.publicUrl)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!imageUrl) {
+      alert("Please upload an image first.")
+      return
+    }
     setIsSubmitting(true)
     // Insert into Supabase
     const { error } = await supabase.from('adease_ads').insert([
@@ -74,18 +81,18 @@ export default function AddAdvertisementModal({ isOpen, onClose, onSubmit, scree
         image_url: imageUrl,
       }
     ])
-    console.log(error)
-    if (!error) {
-      setTitle("")
-      setSelectedScreen("")
-      setImageFile(null)
-      setImageUrl("")
+    if (error) {
+      console.error("Failed to create advertisement:", error.message)
+      alert("Failed to create advertisement. Please try again.")
       setIsSubmitting(false)
-      onSubmit() // trigger parent to refresh ads
-    } else {
-      setIsSubmitting(false)
-      // Optionally show error
+      return
     }
+    setTitle("")
+    setSelectedScreen("")
+    setImageFile(null)
+    setImageUrl("")
+    setIsSubmitting(false)
+    onSubmit() // trigger parent to refresh ads
   }
 
   const handleClose = () => {
@@ -97,7 +104,6 @@ export default function AddAdvertisementModal({ isOpen, onClose, onSubmit, scree
       onClose()
     }
   }
-  console.log(screens)
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
@@ -138,7 +144,7 @@ export default function AddAdvertisementModal({ isOpen, onClose, onSubmit, scree
                   </SelectTrigger>
                   <SelectContent>
                     {screens.map((screen) => (
-                      <SelectItem key={screen.id} value={screen.title}>
+                      <SelectItem key={screen.id} value={screen.id}>
                         <div className="flex items-center gap-2">
                           <div className={`h-2 w-2 rounded-full ${screen.is_active ? "bg-green-500" : "bg-red-500"}`} />
                           <span>{screen.title}</span>
